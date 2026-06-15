@@ -66,12 +66,16 @@ macOS)
     ;;
 esac
 
-# Change into temporary directory.
-cd "$RUNNER_TEMP"
+# Use a unique directory per invocation so repeated calls in the same job (and
+# other tools using $RUNNER_TEMP) don't collide. $RUNNER_TEMP is emptied at the
+# beginning and end of each job, so it needs no manual cleanup; see
+# https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+tmpdir="$(mktemp -d "$RUNNER_TEMP/databricks.XXXXXX")"
+cd "$tmpdir"
 
-gh run download "$last_successful_run_id" -n "$artifact" -D .bin
+gh run download "$last_successful_run_id" -n "$artifact" -D .
 
-dir="$PWD/.bin/$(cli_snapshot_directory)"
+dir="$PWD/$(cli_snapshot_directory)"
 
 if [ ! -d "$dir" ]; then
     echo "Directory does not exist: $dir"
